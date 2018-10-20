@@ -1,23 +1,66 @@
 project(lib_list)
+cmake_minimum_required(VERSION 2.8)
 
-#However, the file(GLOB...) allows for wildcard additions:
-file(GLOB SOURCES "*.c")
+######################################################################################
+# Selector to choose lock for critical section
+######################################################################################
 
-#Generate the static library from the sources
-add_library(${PROJECT_NAME} STATIC ${SOURCES})
-target_link_libraries(${PROJECT_NAME} itf_lib_convention lib_thread)
+# Global Registration of the available list lock practices 
+FUNCTION(lib_list_add_lock)
+	FOREACH(ARG ${ARGV})
+  		set_property(GLOBAL APPEND PROPERTY LIB_LIST_LOCKS ${ARG})
+	ENDFOREACH(ARG)
+ENDFUNCTION(lib_list_add_lock)
 
-if (TARGET lib_FREERTOS)
-	#target_link_libraries(${PROJECT_NAME} itf_lib_convention itf_lib_thread lib_FREERTOS)
-	target_compile_definitions(${PROJECT_NAME} PUBLIC CONFIG_LIST__LOCK_TYPE_FREERTOS)
-	message(STATUS "freertos available")
+lib_list_add_lock("lock_cas")
+lib_list_add_lock("lock_freertos")
+lib_list_add_lock("lock_mem")
+lib_list_add_lock("lock_mtx")
+
+set(LIB_LIST_LOCK ${LIB_LIST_LOCK} CACHE STRING "Architecture to build lib_list on")
+get_property(architectures GLOBAL PROPERTY LIB_LIST_LOCKS)
+list(SORT architectures)
+set_property(CACHE LIB_LIST_LOCK PROPERTY STRINGS None ${architectures})
+
+#######################################################################################
+# Evaluate selection
+#######################################################################################
+SET(LIB_LIST_SOURCE_C   		"src/lib_list.c")
+SET(LIB_LIST_DEPEND               itf_lib_convention lib_thread)
+SET(LIB_LIST_ITF_HEADER          "include")
+
+if("${LIB_LIST_LOCK}" STREQUAL "lock_cas")
+	SET(LIB_LIST_PUBLIC_DEFINITION 	CONFIG_LIST__LOCK_TYPE_CAS)
+	LIST(APPEND LIB_LIST_ITF_HEADER "include/cas")
+elseif("${LIB_LIST_LOCK}" STREQUAL "lock_freertos")
+	SET(LIB_LIST_PUBLIC_DEFINITION 	CONFIG_LIST__LOCK_TYPE_FREERTOS)
+	LIST(APPEND LIB_LIST_ITF_HEADER "include/freertos")
+elseif("${LIB_LIST_LOCK}" STREQUAL "lock_mem")
+	SET(LIB_LIST_PUBLIC_DEFINITION 	CONFIG_LIST__LOCK_TYPE_MEM)
+	LIST(APPEND LIB_LIST_ITF_HEADER "include/mem")
+elseif("${LIB_LIST_LOCK}" STREQUAL "lock_mtx")
+	SET(LIB_LIST_PUBLIC_DEFINITION 	CONFIG_LIST__LOCK_TYPE_MTX)
+	LIST(APPEND LIB_LIST_ITF_HEADER "include/mtx")
+elseif("${LIB_LIST_LOCK}" STREQUAL "None")
+	message(FATAL_ERROR "No valid lock chosen! Please check LIB_LIST_LOCK.")
 else()
- 	#target_link_libraries(${PROJECT_NAME} itf_lib_convention itf_lib_thread)
-endif()
+	message(FATAL_ERROR "No valid lock chosen! Please check LIB_LIST_LOCK.")
+endif("${LIB_LIST_LOCK}" STREQUAL "lock_cas")
+
+message(STATUS "LIB_LIST: selected lock ${LIB_LIST_LOCK}")
+######################################################
+#Build target settings
+######################################################
+
+#message(STATUS "LIB_LIST ##### ${LIB_LIST_SOURCE_C}")
+#message(STATUS "LIB_LIST ##### ${LIB_LIST_PUBLIC_DEFINITION}")
+#message(STATUS "LIB_LIST ##### ${LIB_LIST_DEPEND} ")
+#message(STATUS "LIB_LIST ##### ${LIB_LIST_ITF_HEADER}")
+
+add_library(${PROJECT_NAME} STATIC ${LIB_LIST_SOURCE_C})
+target_link_libraries(${PROJECT_NAME} ${LIB_LIST_DEPEND})
+target_compile_definitions(${PROJECT_NAME} PUBLIC ${LIB_LIST_PUBLIC_DEFINITION})
+target_include_directories(${PROJECT_NAME} PUBLIC ${LIB_LIST_ITF_HEADER}) 
 
 
-#target_compile_definitions(${PROJECT_NAME} PUBLIC CONFIG_LIST__LOCK_TYPE_MTX)
-#target_compile_definitions(${PROJECT_NAME} PUBLIC CONFIG_LIST__LOCK_TYPE_CAS)
-
-
-target_include_directories(${PROJECT_NAME} PUBLIC ./)  
+  
