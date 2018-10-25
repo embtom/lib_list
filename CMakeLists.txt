@@ -47,7 +47,8 @@ else()
 	message(FATAL_ERROR "No valid lock chosen! Please check LIB_LIST_LOCK.")
 endif("${LIB_LIST_LOCK}" STREQUAL "lock_cas")
 
-message(STATUS "LIB_LIST: selected lock ${LIB_LIST_LOCK}")
+message(STATUS "LIB_LIST : selected lock ${LIB_LIST_LOCK}")
+
 ######################################################
 #Build target settings
 ######################################################
