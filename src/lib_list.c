@@ -100,14 +100,14 @@
 static inline void* addr_to_virt(void *_base, void *_phys)
 {
 	void *ptr;
-	ptr = (void*)((char*)_phys - (unsigned int)_base);
+	ptr = (void*)((char*)_phys - (uintptr_t)_base);
 	return ptr;
 }
 
 static inline void* addr_to_phys(void *_base, void *_virt)
 {
 	void *ptr;
-	ptr = (void*)((char*)_virt + (unsigned int)_base);
+	ptr = (void*)((char*)_virt + (uintptr_t)_base);
 	return ptr;
 }
 
@@ -118,9 +118,9 @@ static inline void node_add_prev(struct list_node *_new, struct list_node *_prev
 {
 	struct list_node *phys_next, *virt_prev, *virt_new;
 
-	phys_next = addr_to_phys(_base, _next);
-	virt_prev = addr_to_virt(_base, _prev);
-	virt_new = addr_to_virt(_base, _new);
+	phys_next = (struct list_node*)addr_to_phys(_base, _next);
+	virt_prev = (struct list_node*)addr_to_virt(_base, _prev);
+	virt_new = (struct list_node*)addr_to_virt(_base, _new);
 
 	phys_next->prev = virt_new;
 	_new->next = _next;
@@ -132,9 +132,9 @@ static inline void node_add_next(struct list_node *_new, struct list_node *_prev
 {
 	struct list_node *phys_next, *virt_prev, *virt_new;
 
-	phys_next = addr_to_phys(_base, _next);
-	virt_prev = addr_to_virt(_base, _prev);
-	virt_new = addr_to_virt(_base, _new);
+	phys_next = (struct list_node*)addr_to_phys(_base, _next);
+	virt_prev = (struct list_node*)addr_to_virt(_base, _prev);
+	virt_new = (struct list_node*)addr_to_virt(_base, _new);
 
 	phys_next->next = virt_new;
 	_new->next = virt_prev;
@@ -146,8 +146,8 @@ static inline void node_del(struct list_node *_prev, struct list_node *_next, vo
 {
 	struct list_node *phys_next, *phys_prev;
 
-	phys_next = addr_to_phys(_base, _next);
-	phys_prev = addr_to_phys(_base, _prev);
+	phys_next = (struct list_node*)addr_to_phys(_base, _next);
+	phys_prev = (struct list_node*)addr_to_phys(_base, _prev);
 
 	phys_next->prev = _prev;
 	phys_prev->next = _next;
@@ -156,7 +156,7 @@ static inline void node_del(struct list_node *_prev, struct list_node *_next, vo
 static inline int list_emty(struct list_node *_head, void *_base)
 {
 	struct list_node *virt_head;
-	virt_head = addr_to_virt(_base, _head);
+	virt_head = (struct list_node*)addr_to_virt(_base, _head);
 	return ((_head->next == virt_head) ? 1 : 0);
 }
 
@@ -252,7 +252,7 @@ int lib_list__init(struct queue_attr *_queue, void *_base)
 	}
 
 
-	_queue->head.next = _queue->head.prev = addr_to_virt(_base, (void*)&_queue->head);
+	_queue->head.next = _queue->head.prev = (struct list_node*)addr_to_virt(_base, (void*)&_queue->head);
 	_queue->initialized = M_CMP_INITIALIZED;
 	return LIB_LIST__EOK;
 }
