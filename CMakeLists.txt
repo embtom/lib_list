@@ -52,15 +52,9 @@ endif("${LIB_LIST_LOCK}" STREQUAL "lock_cas")
 
 message(STATUS "LIB_LIST : selected lock ${LIB_LIST_LOCK}")
 
-######################################################
+#######################################################################################
 #Build target settings
-######################################################
-
-#message(STATUS "LIB_LIST ##### ${LIB_LIST_SOURCE_C}")
-#message(STATUS "LIB_LIST ##### ${LIB_LIST_PUBLIC_DEFINITION}")
-#message(STATUS "LIB_LIST ##### ${LIB_LIST_DEPEND} ")
-#message(STATUS "LIB_LIST ##### ${LIB_LIST_ITF_HEADER}")
-
+#######################################################################################
 add_library(${PROJECT_NAME} STATIC ${LIB_LIST_SOURCE_C})
 target_link_libraries(${PROJECT_NAME} ${LIB_LIST_DEPEND})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${LIB_LIST_PUBLIC_DEFINITION})
