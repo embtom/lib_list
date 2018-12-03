@@ -61,10 +61,7 @@ static inline int freertos_lock__init(semilock_t *_lock)
  * ****************************************************************************/
 static inline int freertos_lock__lock(semilock_t *_lock)
 {
-	if(portNVIC_INT_CTRL_REG & portVECTACTIVE_MASK)
-		*_lock = taskENTER_CRITICAL_FROM_ISR();
-	else
-		taskENTER_CRITICAL();
+	*_lock = taskENTER_CRITICAL_FROM_ISR();
 	return EOK;
 }
 
@@ -77,10 +74,7 @@ static inline int freertos_lock__lock(semilock_t *_lock)
  * ****************************************************************************/
 static inline int freertos_lock__unlock(semilock_t *_lock)
 {
-	if(portNVIC_INT_CTRL_REG & portVECTACTIVE_MASK)
-		taskEXIT_CRITICAL_FROM_ISR(*_lock);
-	else
-		taskEXIT_CRITICAL();
+	taskEXIT_CRITICAL_FROM_ISR(*_lock);
     return EOK;
 }
 
