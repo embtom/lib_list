@@ -574,13 +574,13 @@ int lib_list__add_before(struct queue_attr *_queue, struct list_node *_pos_befor
 	return EOK;
 }
 
-
 /* ************************************************************************//**
  * \brief	Get delete node
  *
  *  \param	*_queue [in]		 fifo description attribute, to dequeue
  *	\param  **_first_node[out]   pointer to next list element
  *  \param	_context_id			 Sequential number of contexts defined up to M_DEV_NUMBER_OF_LOCK_CONTEXT
+ *  \param	*_base[in]			base mem address
  *
  *	\return EOK if successful, or negative errno value on error
  * 			-EPAR_NULL		: NULL pointer check
@@ -626,8 +626,9 @@ int lib_list__delete(struct queue_attr *_queue, struct list_node * _del, uint32_
  *  \param	*_queue [in]		 fifo description attribute, to dequeue
  *	\param  **_first_node[out]   pointer to next list element
  *  \param	_context_id			 Sequential number of contexts defined up to M_DEV_NUMBER_OF_LOCK_CONTEXT
+ *  \param	*_base[in]			 base mem address
  *
- *	\return EOK if successful, or negative errno value on error
+ *	\return  return "1" node is in list or "0" if not, or negative errno value on error
  * 			-EPAR_NULL		: NULL pointer check
  * 			-EEXEC_NOINIT   : Queue is not yet initialized
  * 			-ESTD_FAULT		: The passed contexed_id exceeds the number of defined
@@ -648,7 +649,6 @@ int lib_list__contains(struct queue_attr *_queue, struct list_node * _node, uint
 	if(_queue->initialized != M_CMP_INITIALIZED) {
 		return -LIB_LIST__EEXEC_NOINIT;
 	}
-
 
 	ret = LIB_LIST_CRITICAL_SECTION__LOCK(_queue->lock,_context_id);
 	if (ret < LIB_LIST__EOK) {
@@ -673,7 +673,8 @@ int lib_list__contains(struct queue_attr *_queue, struct list_node * _node, uint
  *
  *  \param	*_queue [in]		 fifo description attribute, to dequeue
  *  \param	_context_id			 Sequential number of contexts defined up to M_DEV_NUMBER_OF_LOCK_CONTEXT
- *
+ *  \param	*_base[in]			 base mem address
+ * 
  *	\return EOK if successful, or negative errno value on error
  * 			-EPAR_NULL		: NULL pointer check
  * 			-EEXEC_NOINIT   : Queue is not yet initialized
@@ -703,6 +704,56 @@ int lib_list__emty(struct queue_attr *_queue, uint32_t _context_id, void *_base)
 
 	LIB_LIST_CRITICAL_SECTION__UNLOCK(_queue->lock,_context_id);
 	return ret;
+}
+
+/* ************************************************************************//**
+ * \brief	Request number of queue entries
+ *
+ *  \param	*_queue [in]		 fifo description attribute, to dequeue
+ *  \param	_context_id			 Sequential number of contexts defined up to M_DEV_NUMBER_OF_LOCK_CONTEXT
+ *  \param	*_base[in]			 base mem address
+ *
+ *	\return EOK if successful, or negative errno value on error
+ * 			-EPAR_NULL		: NULL pointer check
+ * 			-EEXEC_NOINIT   : Queue is not yet initialized
+ * 			-ESTD_FAULT		: The passed contexed_id exceeds the number of defined
+ * 							  contexts (M_DEV_NUMBER_OF_LOCK_CONTEXT)
+ * 			-ESTD_AGAIN		: fifo is empty
+ *
+ * ****************************************************************************/
+int lib_list__count(struct queue_attr *_queue, uint32_t _context_id, void *_base)
+{
+	int ret;
+	struct list_node *end, *itr;
+	unsigned int entryCount = 1;
+
+	if (_queue == NULL) {
+		return -LIB_LIST__EPAR_NULL;
+	}
+
+	if(_queue->initialized != M_CMP_INITIALIZED) {
+		return -LIB_LIST__EEXEC_NOINIT;
+	}
+
+	ret = LIB_LIST_CRITICAL_SECTION__LOCK(_queue->lock,_context_id);
+	if (ret < LIB_LIST__EOK) {
+		return ret;
+	}
+
+	if(list_emty(&_queue->head,_base)) {
+		LIB_LIST_CRITICAL_SECTION__UNLOCK(_queue->lock,_context_id);
+		return 0;
+	}
+
+	// Set itr to begin and request end
+	itr = (struct list_node*)addr_to_phys(_base, _queue->head.prev);
+	end = (struct list_node*)addr_to_phys(_base, _queue->head.next);
+	while(!list_equal(itr, end)) {
+		itr = list_next(itr, _base);
+		entryCount++;
+	}
+	LIB_LIST_CRITICAL_SECTION__UNLOCK(_queue->lock,_context_id);
+	return entryCount;
 }
 
 

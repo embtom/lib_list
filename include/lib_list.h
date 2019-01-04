@@ -184,6 +184,7 @@ int lib_list__add_before(struct queue_attr *_queue, struct list_node *_pos_befor
  *  \param	*_queue [in]		 fifo description attribute, to dequeue
  *	\param  **_first_node[out]   pointer to next list element
  *  \param	_context_id			 Sequential number of contexts defined up to M_DEV_NUMBER_OF_LOCK_CONTEXT
+ *  \param	*_base[in]			base mem address
  *
  *	\return EOK if successful, or negative errno value on error
  * 			-EPAR_NULL		: NULL pointer check
@@ -201,8 +202,9 @@ int lib_list__delete(struct queue_attr *_queue, struct list_node * _del, uint32_
  *  \param	*_queue [in]		 fifo description attribute, to dequeue
  *	\param  **_first_node[out]   pointer to next list element
  *  \param	_context_id			 Sequential number of contexts defined up to M_DEV_NUMBER_OF_LOCK_CONTEXT
+ *  \param	*_base[in]			 base mem address
  *
- *	\return EOK if successful, or negative errno value on error
+ *	\return  return "1" node is in list or "0" if not, or negative errno value on error
  * 			-EPAR_NULL		: NULL pointer check
  * 			-EEXEC_NOINIT   : Queue is not yet initialized
  * 			-ESTD_FAULT		: The passed contexed_id exceeds the number of defined
@@ -217,7 +219,8 @@ int lib_list__contains(struct queue_attr *_queue, struct list_node * _node, uint
  *
  *  \param	*_queue [in]		 fifo description attribute, to dequeue
  *  \param	_context_id			 Sequential number of contexts defined up to M_DEV_NUMBER_OF_LOCK_CONTEXT
- *
+ *  \param	*_base[in]			 base mem address
+ * 
  *	\return EOK if successful, or negative errno value on error
  * 			-EPAR_NULL		: NULL pointer check
  * 			-EEXEC_NOINIT   : Queue is not yet initialized
@@ -228,7 +231,22 @@ int lib_list__contains(struct queue_attr *_queue, struct list_node * _node, uint
  * ****************************************************************************/
 int lib_list__emty(struct queue_attr *_queue, uint32_t _context_id, void *_base);
 
-
+/* ************************************************************************//**
+ * \brief	Request number of queue entries
+ *
+ *  \param	*_queue [in]		 fifo description attribute, to dequeue
+ *  \param	_context_id			 Sequential number of contexts defined up to M_DEV_NUMBER_OF_LOCK_CONTEXT
+ *  \param	*_base[in]			 base mem address
+ *
+ *	\return EOK if successful, or negative errno value on error
+ * 			-EPAR_NULL		: NULL pointer check
+ * 			-EEXEC_NOINIT   : Queue is not yet initialized
+ * 			-ESTD_FAULT		: The passed contexed_id exceeds the number of defined
+ * 							  contexts (M_DEV_NUMBER_OF_LOCK_CONTEXT)
+ * 			-ESTD_AGAIN		: fifo is empty
+ *
+ * ****************************************************************************/
+int lib_list__count(struct queue_attr *_queue, uint32_t _context_id, void *_base);
 
 
 struct list_node* ITR_BEGIN(struct queue_attr *_queue, uint32_t _context_id, void *_base);
